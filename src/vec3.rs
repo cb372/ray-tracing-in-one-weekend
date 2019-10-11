@@ -31,6 +31,10 @@ impl Vec3 {
         *self *= k;
     }
 
+    pub fn unit_vector(v: Self) -> Self {
+        v / v.length()
+    }
+
     pub fn dot(v1: Self, v2: Self) -> f64 {
         v1.0*v2.0 + v1.1*v2.1 + v1.2*v2.2
     }
@@ -105,6 +109,17 @@ impl Mul<f64> for Vec3 {
             self.0 * other,
             self.1 * other,
             self.2 * other
+        )
+    }
+}
+
+impl Mul<Vec3> for f64 {
+    type Output = Vec3;
+    fn mul(self, other: Vec3) -> Vec3 {
+        Vec3(
+            self * other.0,
+            self * other.1,
+            self * other.2
         )
     }
 }
