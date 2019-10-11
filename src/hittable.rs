@@ -1,7 +1,6 @@
 use crate::vec3::Vec3;
 use crate::ray::Ray;
 
-#[derive(Copy, Clone)]
 pub struct HitRecord {
     pub t: f64,
     pub p: Vec3,
@@ -25,13 +24,12 @@ impl <T> Hittable for Vec<T> where T: Hittable {
         let mut closest_hit_record: Option<HitRecord> = None;
         let mut closest_t = t_max;
         for element in self.iter() {
-            let hit_record = element.hit(r, t_min, closest_t);
-            if hit_record.is_some() {
-                closest_hit_record = hit_record;
-                closest_t = hit_record.unwrap().t;
+            if let Some(hit_record) = element.hit(r, t_min, closest_t) {
+                closest_t = hit_record.t;
+                closest_hit_record = Some(hit_record);
             }
         }
-        return closest_hit_record;
+        closest_hit_record
     }
 
 }
