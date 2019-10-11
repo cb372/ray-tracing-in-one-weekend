@@ -1,35 +1,32 @@
-pub mod vec3;
-pub mod ray;
+mod vec3;
+mod ray;
+mod hittable;
+mod sphere;
+
 
 use vec3::Vec3;
 use ray::Ray;
+use sphere::Sphere;
+use hittable::Hittable;
 
 fn main() {
     raytrace()
 }
 
-fn hit_sphere(center: Vec3, radius: f64, r: &Ray) -> f64 {
-    let oc = r.origin - center;
-    let a = Vec3::dot(r.direction, r.direction);
-    let b = 2.0 * Vec3::dot(oc, r.direction);
-    let c = Vec3::dot(oc, oc) - radius * radius;
-    let discriminant = b * b - 4.0 * a * c;
-    if discriminant < 0.0 {
-        -1.0
-    } else {
-        (-b - discriminant.sqrt()) / (2.0 * a)
-    }
-}
-
-fn colour(r: Ray) -> Vec3 {
-    let t = hit_sphere(Vec3(0.0, 0.0, -1.0), 0.5, &r);
-    if t > 0.0 {
-        let normal = Vec3::unit_vector(r.point_at_parameter(t) - Vec3(0.0, 0.0, -1.0));
-        return 0.5 * Vec3(normal.x() + 1.0, normal.y() + 1.0, normal.z() + 1.0);
-    } else {
-        let unit_direction = Vec3::unit_vector(r.direction);
-        let pos = 0.5 * (unit_direction.y() + 1.0);
-        (1.0 - pos) * Vec3(1.0, 1.0, 1.0) + pos * Vec3(0.5, 0.7, 1.0)
+fn colour<T: Hittable>(r: Ray, world: &T) -> Vec3 {
+    match world.hit(&r, 0.0, std::f64::MAX) {
+        Some(hit_record) => {
+            0.5 * Vec3(
+                hit_record.normal.x() + 1.0,
+                hit_record.normal.y() + 1.0,
+                hit_record.normal.z() + 1.0
+            )
+        }
+        None => {
+            let unit_direction = Vec3::unit_vector(r.direction);
+            let t = 0.5 * (unit_direction.y() + 1.0);
+            (1.0 - t) * Vec3(1.0, 1.0, 1.0) + t * Vec3(0.5, 0.7, 1.0)
+        }
     }
 }
 
@@ -45,6 +42,16 @@ fn raytrace() {
     let vertical = Vec3(0.0, 2.0, 0.0);
     let origin = Vec3(0.0, 0.0, 0.0);
 
+    let sphere = Sphere {
+        centre: Vec3(0.0, 0.0, -1.0),
+        radius: 0.5
+    };
+    let background = Sphere {
+        centre: Vec3(0.0, -100.5, -1.0),
+        radius: 100.0
+    };
+    let world = vec![sphere, background];
+
     for j in (0..ny).rev() {
         for i in 0..nx {
             let u = (i as f64) / (nx as f64);
@@ -54,7 +61,7 @@ fn raytrace() {
                 origin,
                 direction
             };
-            let col = colour(r);
+            let col = colour(r, &world);
             let ir = (255.99 * col.r()) as i64;
             let ig = (255.99 * col.g()) as i64;
             let ib = (255.99 * col.b()) as i64;
